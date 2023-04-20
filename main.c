@@ -521,10 +521,10 @@ void insert(char *word, char compatible, char inGame) {//TODO
  */
 char filterWord (char *p, char *r) {
     char returnValue = '1';
-    int exitCicle = 0;
+    int exitCycle = 0;
     char l;
 
-    for (int i = 0; (i < k && exitCicle != 1); i++) {
+    for (int i = 0; (i < k && exitCycle != 1); i++) {
         l = p[i];
 
         if (letterValueArray[hashFunctionLetteraValore(l)]->value != -1) {
@@ -533,12 +533,12 @@ char filterWord (char *p, char *r) {
                 0) {
                 returnValue = '0';
 
-                exitCicle = 1;
+                exitCycle = 1;
                 break;
 
             } else if (searchArray(letterValueArray[hashFunctionLetteraValore(l)]->pos, i) == 1) {
                 returnValue = '0';
-                exitCicle = 1;
+                exitCycle = 1;
                 break;
             }
         }
@@ -546,19 +546,19 @@ char filterWord (char *p, char *r) {
             if (p[i] !=
                 goalWord[i]) {
                 returnValue = '0';
-                exitCicle = 1;
+                exitCycle = 1;
                 break;
             }
         }
         if (occurrencesArray[i] > 0 && countLetters(p, goalWord[i]) < occurrencesArray[i]) {
             returnValue = '0';
-            exitCicle = 1;
+            exitCycle = 1;
             break;
         }
         if (occurrencesArray[i] < 0 && countLetters(p, goalWord[i]) != (occurrencesArray[i] * -1)) {
             returnValue = '0';
 
-            exitCicle = 1;
+            exitCycle = 1;
             break;
         }
 
