@@ -487,30 +487,33 @@ void insert(char *word, char compatible, char inGame) {//TODO
     if (inGame == '0')
         globalCounter++;
 
-    else if (inGame == '1' && compatible == '1'){
-        globalCounter++;
+    else if (inGame == '1') {
 
-        if (strcmp(new_node->word, min->word) < 0) {
-            new_node->compatibleSuccessor = min;
-            new_node->compatiblePredecessor = NULL;
-            min->compatiblePredecessor = new_node;
-            min = new_node;
+        if (compatible == '1') {
+            globalCounter++;
 
-        }else {
-            temp = compatibleSuccessor(new_node);
-            new_node->compatibleSuccessor = temp;
-            if (temp != NULL) {
-                new_node->compatiblePredecessor = temp->compatiblePredecessor;
-                if (temp->compatiblePredecessor != NULL) {
-                    temp2 = temp->compatiblePredecessor;
-                    temp->compatiblePredecessor = new_node;
-                    temp2->compatibleSuccessor = new_node;
-                }else
-                    temp->compatiblePredecessor = new_node;
+            if (strcmp(new_node->word, min->word) < 0) {
+                new_node->compatibleSuccessor = min;
+                new_node->compatiblePredecessor = NULL;
+                min->compatiblePredecessor = new_node;
+                min = new_node;
 
             } else {
-                new_node->compatiblePredecessor = compatiblePredecessor(new_node);
-                new_node->compatibleSuccessor = NULL;
+                temp = compatibleSuccessor(new_node);
+                new_node->compatibleSuccessor = temp;
+                if (temp != NULL) {
+                    new_node->compatiblePredecessor = temp->compatiblePredecessor;
+                    if (temp->compatiblePredecessor != NULL) {
+                        temp2 = temp->compatiblePredecessor;
+                        temp->compatiblePredecessor = new_node;
+                        temp2->compatibleSuccessor = new_node;
+                    } else
+                        temp->compatiblePredecessor = new_node;
+
+                } else {
+                    new_node->compatiblePredecessor = compatiblePredecessor(new_node);
+                    new_node->compatibleSuccessor = NULL;
+                }
             }
         }
     }
@@ -621,10 +624,10 @@ void startGame() {
 
                 if (ended == 0) {
                     if (str[0]!='+')
-                        insert(str, filterWord(str, resConstraints), 1);
+                        insert(str, filterWord(str, resConstraints), '1');
                 }else {
                     if (str[0]!='+')
-                        insert(str, 1, 0);
+                        insert(str, '1', '0');
                 }
                 if (fgets(str,k+20, stdin) != NULL)
                     str[strcspn(str, "\n")] = 0;
@@ -728,7 +731,7 @@ void fillTree() {
         newWord [strcspn(newWord, "\n")] = 0;
         while( (strcmp("+nuova_partita\0", newWord) != 0)) {
             if (newWord[0] != '+')
-                insert(newWord, 1, 0);
+                insert(newWord, '1', '0');
             if (fgets(newWord, k + 20, stdin) != NULL)
                 newWord[strcspn(newWord, "\n")] = 0;
 
