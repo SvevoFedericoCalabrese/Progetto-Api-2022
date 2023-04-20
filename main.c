@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -346,7 +345,7 @@ char *compareWords(char *s1, char *s2) {
                     insertInPosArray(letterValueArray[hashFunctionLetteraValore(s2[i])]->pos, i);
 
                     /**
-                     * Conto solo le lettere che so essere presenti(in base alle parole "giocate") nella word di riferimento ma che sono in posizione sbagliata
+                     * Conto solo le lettere che so essere presenti(in base alle parole "giocate") nella parola di riferimento ma che sono in posizione sbagliata
                      */
                     letterValueArray[hashFunctionLetteraValore(s2[i])]->value =
                             letterValueArray[hashFunctionLetteraValore(s2[i])]->value + 2;
@@ -440,7 +439,7 @@ char *customStrCopy(char *dest, int size, char *src) {
 
 /*
  * Inserisce ogni nuovo nodo nell'albero, ma se viene inserito durante una partita viene controllato che la goalWord sia compatibile, se si il nodo
- * viene aggiunto nella lista (in ogni caso viene aggiunto all'albero perchè la goalWord va ad arrichire il dizionario che sarà usato anche nelle successive partite)
+ * viene aggiunto nella lista (in ogni caso viene aggiunto all'albero perchè la parola va ad arrichire il dizionario che sarà usato anche nelle successive partite)
  *
  * Se il nodo è aggiunto prima o dopo una partita viene semplicemente aggiunto all'albero e non alla lista, questa verrà poi sistema dalla funzione "fillSuccessorTree"
  */
