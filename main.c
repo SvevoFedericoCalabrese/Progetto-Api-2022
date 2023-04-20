@@ -208,24 +208,24 @@ int searchArray(int posArray[],int pos) {
  * */
 int filterSingleWord(struct treeNode *node) {
     char l;
-    int exitCicle = 0;
+    int exitCycle = 0;
 
     int nlettere = 0;
     if (node->compatible != '0') {
-        for (int i = 0; (i < k && exitCicle != 1); i++) {
+        for (int i = 0; (i < k && exitCycle != 1); i++) {
             l = node->word[i];
             if (letterValueArray[hashFunctionLetteraValore(l)]->value != -1) {
                 if (letterValueArray[hashFunctionLetteraValore(l)]->value ==
                     0) {
                     node->compatible = '0';
                     globalCounter--;
-                    exitCicle = 1;
+                    exitCycle = 1;
                     break;
 
                 } else if (searchArray(letterValueArray[hashFunctionLetteraValore(l)]->pos, i) == 1) {
                     node->compatible = '0';
                     globalCounter--;
-                    exitCicle = 1;
+                    exitCycle = 1;
                     break;
                 }
             }
@@ -234,7 +234,7 @@ int filterSingleWord(struct treeNode *node) {
                     goalWord[i]) {
                     node->compatible = '0';
                     globalCounter--;
-                    exitCicle = 1;
+                    exitCycle = 1;
                     break;
                 }
             }
@@ -243,20 +243,20 @@ int filterSingleWord(struct treeNode *node) {
             if (occurrencesArray[i] > 0 && nlettere < occurrencesArray[i]) {
                 node->compatible = '0';
                 globalCounter--;
-                exitCicle = 1;
+                exitCycle = 1;
                 break;
             }
             if (occurrencesArray[i] < 0 && nlettere != occurrencesArray[i] * -1) {
                 node->compatible = '0';
                 globalCounter--;
-                exitCicle = 1;
+                exitCycle = 1;
                 break;
             }
 
         }
     }
 
-    return exitCicle;
+    return exitCycle;
 }
 
 /*
@@ -749,11 +749,3 @@ int main() {
     startGame();
     return 0;
 }
-
-
-
-
-
-
-
-
