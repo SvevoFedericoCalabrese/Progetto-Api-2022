@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *goalWord;
+char *goalWord; //parola da indovinare
 char *res;
 char *resConstraints;
 int k=0;
@@ -14,7 +14,7 @@ int ended = 0;
 
 /*
  * La struttura dati utilizzata è un bst con una lista doppiamente linkata interna, infatti ogni nodo dell'albero ha un puntatore
- * al diretto successore(e predecessore) che ha la goalWord ancora compatibile con i vincoli appresi, inizialmente la lista contiene
+ * al diretto successore(e predecessore) che ha la parola ancora compatibile con i vincoli appresi, inizialmente la lista contiene
  * tutti i nodi dell'albero
  */
 struct treeNode {
@@ -48,7 +48,7 @@ int hashFunctionLetteraValore(char lettera) {
 /*
  * questa funzione permette di salvare per ogni letter tutte le informazioni che vengono apprese giocando
  * come la posizione nella stringa dove non può comparire, il numero minimo, massimo ed esatto delle occorrenze 
- * di quella letter nella word da indovinare
+ * di quella lettera nella parola da indovinare
  */
 void insertInLetteraValore(char lettera, int valore,int pos,int n_max, int n_min ) {
     struct letterValue *item;
@@ -101,7 +101,7 @@ struct treeNode* inOrderSuccessor(struct treeNode *n)
 
 /*
  * questa funzione,prende in ingresso un nodo qualsiasi dell'albero e
- * tramite una ricerca inOrder trova il primo successore la cui la goalWord è ancora compatibile coi vincoli appresi
+ * tramite una ricerca inOrder trova il primo successore la cui la parola è ancora compatibile coi vincoli appresi
  */
 struct treeNode* compatibleSuccessor(struct treeNode *n)
 {
@@ -200,11 +200,11 @@ int searchArray(int posArray[],int pos) {
 }
 
 /*
- * prende un nodo in input e controlla che la goalWord contenuta nel nodo sia ancora compatibile, sostanzialmente controlla che ogni
- * letter della goalWord rispetti tutti i vincoli salvati in "letterValueArray", nel caso la goalWord non sia compatibile setta
+ * prende un nodo in input e controlla che la parola contenuta nel nodo sia ancora compatibile, sostanzialmente controlla che ogni
+ * letter della parola rispetti tutti i vincoli salvati in "letterValueArray", nel caso la parola non sia compatibile setta
  *il campo "compatible" a 0
  *
- * questa funzione è utilizzata durante la partita per segnare i nodi che non sono più disponibili dopo che la goalWord giocata
+ * questa funzione è utilizzata durante la partita per segnare i nodi che non sono più disponibili dopo che la parola giocata
  * viene letta in input, la funzione è chiamata per ogni nodo
  * */
 int filterSingleWord(struct treeNode *node) {
@@ -296,7 +296,7 @@ void filterDictionary(struct treeNode* root) {
 }
 
 /*
- * conofronta la goalWord giocata con quella da indovinare e aggiorna i vincoli sulle lettere in "letterValueArray" di conseguenza
+ * conofronta la parola giocata con quella da indovinare e aggiorna i vincoli sulle lettere in "letterValueArray" di conseguenza
  */
 char *compareWords(char *s1, char *s2) {
     int  n = 0,c = 0,counter = 0;
@@ -518,7 +518,7 @@ void insert(char *word, char compatible, char inGame) {//TODO
 }
 
 /*
- * se una goalWord viene aggiunta al dizionario durante una partita, questa funzione controlla se tale parole rispetta i vincoli trovati
+ * se una parola viene aggiunta al dizionario durante una partita, questa funzione controlla se tale parole rispetta i vincoli trovati
  */
 char filterWord (char *p, char *r) {
     char returnValue = '1';
@@ -696,7 +696,7 @@ void fillTree() {
         getNum[strcspn(getNum, "\n")] = 0;
     k = atoi(getNum);
 
-    char *stringa = malloc(sizeof(char)*(k+20));
+    char *newWord = malloc(sizeof(char) * (k + 20));
 
     occurrencesArray = malloc(sizeof (int) * (k + 2));
     for(int i = 0; i < k; i++)
@@ -725,13 +725,13 @@ void fillTree() {
     insertInLetteraValore('_',-1,0,0,0);
 
 
-    if (fgets (stringa, k+20, stdin) != NULL) {
-        stringa [strcspn(stringa,"\n")] = 0;
-        while( (strcmp( "+nuova_partita\0", stringa)!= 0)) {
-            if (stringa[0]!='+')
-                insert(stringa, 1, 0);
-            if (fgets(stringa, k + 20, stdin) != NULL)
-                stringa[strcspn(stringa, "\n")] = 0;
+    if (fgets (newWord, k + 20, stdin) != NULL) {
+        newWord [strcspn(newWord, "\n")] = 0;
+        while( (strcmp("+nuova_partita\0", newWord) != 0)) {
+            if (newWord[0] != '+')
+                insert(newWord, 1, 0);
+            if (fgets(newWord, k + 20, stdin) != NULL)
+                newWord[strcspn(newWord, "\n")] = 0;
 
         }
         min = getMin(root);
