@@ -3,30 +3,26 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
-char *parola;
+char *goalWord;
 char *res;
-char *vincoliSuRes;
+char *resConstraints;
 int k=0;
 int globalCounter;        //per contare le parole compatibili coi vincoli
-int *arrayDelleOccorrenze;
+int *occurrencesArray;
 char *strPerCP;
 int ended = 0;
 
-
-
 /*
  * La struttura dati utilizzata è un bst con una lista doppiamente linkata interna, infatti ogni nodo dell'albero ha un puntatore
- * al diretto successore(e predecessore) che ha la parola ancora compatibile con i vincoli appresi, inizialmente la lista contiene
+ * al diretto successore(e predecessore) che ha la goalWord ancora compatibile con i vincoli appresi, inizialmente la lista contiene
  * tutti i nodi dell'albero
  */
 struct treeNode {
     struct treeNode *left;
     struct treeNode *right;
     struct treeNode *father;
-    struct treeNode *successoreCompatibile;
-    struct treeNode *predecessoreCompatibile;
+    struct treeNode *compatibleSuccessor;
+    struct treeNode *compatiblePredecessor;
     char compatible;
     char word[];
 
@@ -34,49 +30,49 @@ struct treeNode {
 
 struct treeNode *root,*min;
 
-struct letteraValore {
-    char lettera;
+struct letterValue {
+    char letter;
     int value;
-    char max_raggiunto;
-    int n_esatto;
+    char maxReached;
+    int n_exact;
     int n_min; //pos 0 per il minimo attuale pos 1 per il minimo eventuale da confrontare con l'attuale
     int pos[];
 };
 
-struct letteraValore *arrayletteraValore[124];
+struct letterValue *letterValueArray[124];
 
 int hashFunctionLetteraValore(char lettera) {
     return lettera;
 }
 
 /*
- * questa funzione permette di salvare per ogni lettera tutte le informazioni che vengono apprese giocando
+ * questa funzione permette di salvare per ogni letter tutte le informazioni che vengono apprese giocando
  * come la posizione nella stringa dove non può comparire, il numero minimo, massimo ed esatto delle occorrenze 
- * di quella lettera nella word da indovinare
+ * di quella letter nella word da indovinare
  */
 void insertInLetteraValore(char lettera, int valore,int pos,int n_max, int n_min ) {
-    struct letteraValore *item;
-    if (arrayletteraValore[hashFunctionLetteraValore(lettera)] == NULL) {
+    struct letterValue *item;
+    if (letterValueArray[hashFunctionLetteraValore(lettera)] == NULL) {
         item = malloc(sizeof item[0] + sizeof item->pos[0] * (k+1));
 
-        item->lettera = lettera;
+        item->letter = lettera;
         item->value = valore;
 
         for (int i = 0; i < k; i++)
             item->pos[i] = -1;
-        item->max_raggiunto = '0';
-        item->n_esatto = n_max;
+        item->maxReached = '0';
+        item->n_exact = n_max;
         item->n_min = n_min;
-        arrayletteraValore[hashFunctionLetteraValore(lettera)] =  item;
+        letterValueArray[hashFunctionLetteraValore(lettera)] =  item;
     }
     else {
-        arrayletteraValore[hashFunctionLetteraValore(lettera)]->value = valore;
-        arrayletteraValore[hashFunctionLetteraValore(lettera)]->lettera = lettera;
+        letterValueArray[hashFunctionLetteraValore(lettera)]->value = valore;
+        letterValueArray[hashFunctionLetteraValore(lettera)]->letter = lettera;
         for (int i = 0; i < k; i++)
-            arrayletteraValore[hashFunctionLetteraValore(lettera)]->pos[i] = -1;
-        arrayletteraValore[hashFunctionLetteraValore(lettera)]->max_raggiunto = '0';
-        arrayletteraValore[hashFunctionLetteraValore(lettera)]->n_esatto = n_max;
-        arrayletteraValore[hashFunctionLetteraValore(lettera)]->n_min = n_min;
+            letterValueArray[hashFunctionLetteraValore(lettera)]->pos[i] = -1;
+        letterValueArray[hashFunctionLetteraValore(lettera)]->maxReached = '0';
+        letterValueArray[hashFunctionLetteraValore(lettera)]->n_exact = n_max;
+        letterValueArray[hashFunctionLetteraValore(lettera)]->n_min = n_min;
 
     }
 }
@@ -105,9 +101,9 @@ struct treeNode* inOrderSuccessor(struct treeNode *n)
 
 /*
  * questa funzione,prende in ingresso un nodo qualsiasi dell'albero e
- * tramite una ricerca inOrder trova il primo successore la cui la parola è ancora compatibile coi vincoli appresi
+ * tramite una ricerca inOrder trova il primo successore la cui la goalWord è ancora compatibile coi vincoli appresi
  */
-struct treeNode* successoreCompatibile(struct treeNode *n)
+struct treeNode* compatibleSuccessor(struct treeNode *n)
 {
 
     struct treeNode* current = n;
@@ -122,25 +118,24 @@ struct treeNode* successoreCompatibile(struct treeNode *n)
 /*
  * come prima ma per il predecessore
  */
-struct treeNode* predCompatiibile(struct treeNode *n)
+struct treeNode* compatiblePredecessor(struct treeNode *n)
 {
     struct treeNode *curr,*prev;
     curr = min;
     prev = min;
-    if (successoreCompatibile(curr) != NULL) {
-        while (successoreCompatibile(curr) != NULL) {
+    if (compatibleSuccessor(curr) != NULL) {
+        while (compatibleSuccessor(curr) != NULL) {
             if (curr->compatible == '1')
                 prev = curr;
-            curr = successoreCompatibile(curr);
+            curr = compatibleSuccessor(curr);
 
         }
-        prev->successoreCompatibile = n;
+        prev->compatibleSuccessor = n;
         return prev;
     }
-        min->successoreCompatibile = n;
+        min->compatibleSuccessor = n;
         return min;
 }
-
 
 /*
  * costruisce la lista interna,collegando i puntatori dei nodi nel modo corretto
@@ -148,20 +143,20 @@ struct treeNode* predCompatiibile(struct treeNode *n)
 void fillSuccessorField() {
     struct treeNode* current = getMin(root);
     struct treeNode* temp;
-    current->predecessoreCompatibile = NULL;
+    current->compatiblePredecessor = NULL;
     while (current != NULL){
-        current->successoreCompatibile = inOrderSuccessor(current);
-        if (current->successoreCompatibile == NULL)  {
+        current->compatibleSuccessor = inOrderSuccessor(current);
+        if (current->compatibleSuccessor == NULL)  {
 
             break;
         }
 
         temp = current;
-        current = current->successoreCompatibile;
-        current->predecessoreCompatibile = temp;
+        current = current->compatibleSuccessor;
+        current->compatiblePredecessor = temp;
 
     }
-    current->successoreCompatibile = NULL;
+    current->compatibleSuccessor = NULL;
 }
 
 int countLetters(char *string, char c) {
@@ -205,11 +200,11 @@ int searchArray(int posArray[],int pos) {
 }
 
 /*
- * prende un nodo in input e controlla che la parola contenuta nel nodo sia ancora compatibile, sostanzialmente controlla che ogni
- * lettera della parola rispetti tutti i vincoli salvati in "arrayletteraValore", nel caso la parola non sia compatibile setta
+ * prende un nodo in input e controlla che la goalWord contenuta nel nodo sia ancora compatibile, sostanzialmente controlla che ogni
+ * letter della goalWord rispetti tutti i vincoli salvati in "letterValueArray", nel caso la goalWord non sia compatibile setta
  *il campo "compatible" a 0
  *
- * questa funzione è utilizzata durante la partita per segnare i nodi che non sono più disponibili dopo che la parola giocata
+ * questa funzione è utilizzata durante la partita per segnare i nodi che non sono più disponibili dopo che la goalWord giocata
  * viene letta in input, la funzione è chiamata per ogni nodo
  * */
 int filterSingleWord(struct treeNode *node) {
@@ -220,39 +215,39 @@ int filterSingleWord(struct treeNode *node) {
     if (node->compatible != '0') {
         for (int i = 0; (i < k && exitCicle != 1); i++) {
             l = node->word[i];
-            if ( arrayletteraValore[hashFunctionLetteraValore(l)]->value != -1) {
-                if (arrayletteraValore[hashFunctionLetteraValore(l)]->value ==
+            if (letterValueArray[hashFunctionLetteraValore(l)]->value != -1) {
+                if (letterValueArray[hashFunctionLetteraValore(l)]->value ==
                     0) {
                     node->compatible = '0';
                     globalCounter--;
                     exitCicle = 1;
                     break;
 
-                } else if (searchArray(arrayletteraValore[hashFunctionLetteraValore(l)]->pos, i) == 1) {
+                } else if (searchArray(letterValueArray[hashFunctionLetteraValore(l)]->pos, i) == 1) {
                     node->compatible = '0';
                     globalCounter--;
                     exitCicle = 1;
                     break;
                 }
             }
-            if (vincoliSuRes[i] != '*') {
+            if (resConstraints[i] != '*') {
                 if (node->word[i] !=
-                    parola[i]) {
+                    goalWord[i]) {
                     node->compatible = '0';
                     globalCounter--;
                     exitCicle = 1;
                     break;
                 }
             }
-            if (arrayDelleOccorrenze[i] != 0)
-                nlettere = countLetters(node->word, parola[i]);
-            if (arrayDelleOccorrenze[i] > 0 && nlettere < arrayDelleOccorrenze[i]) {
+            if (occurrencesArray[i] != 0)
+                nlettere = countLetters(node->word, goalWord[i]);
+            if (occurrencesArray[i] > 0 && nlettere < occurrencesArray[i]) {
                 node->compatible = '0';
                 globalCounter--;
                 exitCicle = 1;
                 break;
             }
-            if (arrayDelleOccorrenze[i] < 0 && nlettere != arrayDelleOccorrenze[i] * -1) {
+            if (occurrencesArray[i] < 0 && nlettere != occurrencesArray[i] * -1) {
                 node->compatible = '0';
                 globalCounter--;
                 exitCicle = 1;
@@ -275,50 +270,50 @@ void filterDictionary(struct treeNode* root) {
     struct treeNode *temp;
 
     while (filterSingleWord(min) == 1)
-        min = min->successoreCompatibile;
+        min = min->compatibleSuccessor;
 
-    if (min->successoreCompatibile != NULL) {
+    if (min->compatibleSuccessor != NULL) {
         prev = min;
-        current = min->successoreCompatibile;
-        current->predecessoreCompatibile = min;
-        while (current->successoreCompatibile != NULL) {
+        current = min->compatibleSuccessor;
+        current->compatiblePredecessor = min;
+        while (current->compatibleSuccessor != NULL) {
 
             if (filterSingleWord(current) == 1) {
-                prev->successoreCompatibile = current->successoreCompatibile;
-                (current->successoreCompatibile)->predecessoreCompatibile = prev;
+                prev->compatibleSuccessor = current->compatibleSuccessor;
+                (current->compatibleSuccessor)->compatiblePredecessor = prev;
 
             } else
                 prev = current;
 
-            current = current->successoreCompatibile;
+            current = current->compatibleSuccessor;
         }
 
         if (filterSingleWord(current) == 1) {
-            temp = current->predecessoreCompatibile;
-            temp->successoreCompatibile = NULL;
+            temp = current->compatiblePredecessor;
+            temp->compatibleSuccessor = NULL;
         }
     }
 }
 
 /*
- * conofronta la parola giocata con quella da indovinare e aggiorna i vincoli sulle lettere in "arrayletteraValore" di conseguenza
+ * conofronta la goalWord giocata con quella da indovinare e aggiorna i vincoli sulle lettere in "letterValueArray" di conseguenza
  */
-char *confrontaParole(char *s1, char *s2) {
+char *compareWords(char *s1, char *s2) {
     int  n = 0,c = 0,counter = 0;
     for (int i = 0; i < k; i++) {
 
         if(s2[i] == s1[i]) {
             strPerCP[i] = '+';
-            vincoliSuRes[i]=s1[i];
-            arrayletteraValore[hashFunctionLetteraValore(s2[i])]->value =
-                    arrayletteraValore[hashFunctionLetteraValore(s2[i])]->value + 2;
+            resConstraints[i]=s1[i];
+            letterValueArray[hashFunctionLetteraValore(s2[i])]->value =
+                    letterValueArray[hashFunctionLetteraValore(s2[i])]->value + 2;
 
-            arrayletteraValore[hashFunctionLetteraValore(s2[i])]->n_min++;
+            letterValueArray[hashFunctionLetteraValore(s2[i])]->n_min++;
 
         } else if (countLetters(s1, s2[i]) == 0) {
 
             strPerCP[i] = '/';
-            arrayletteraValore[hashFunctionLetteraValore(s2[i])]->value = 0;
+            letterValueArray[hashFunctionLetteraValore(s2[i])]->value = 0;
 
 
         }else if (countLetters(s1, s2[i]) != 0 && s2[i] != s1[i]  ) {
@@ -334,27 +329,27 @@ char *confrontaParole(char *s1, char *s2) {
                 if (counter >= n-c ) {
                     strPerCP[i] = '/';
 
-                    arrayletteraValore[hashFunctionLetteraValore(s2[i])]->n_esatto = n;
-                    arrayletteraValore[hashFunctionLetteraValore(s2[i])]->max_raggiunto = '1';
+                    letterValueArray[hashFunctionLetteraValore(s2[i])]->n_exact = n;
+                    letterValueArray[hashFunctionLetteraValore(s2[i])]->maxReached = '1';
 
-                    insertInPosArray(arrayletteraValore[hashFunctionLetteraValore(s2[i])]->pos,i);
-                    arrayletteraValore[hashFunctionLetteraValore(s2[i])]->value =
-                            arrayletteraValore[hashFunctionLetteraValore(s2[i])]->value + 2;
+                    insertInPosArray(letterValueArray[hashFunctionLetteraValore(s2[i])]->pos, i);
+                    letterValueArray[hashFunctionLetteraValore(s2[i])]->value =
+                            letterValueArray[hashFunctionLetteraValore(s2[i])]->value + 2;
 
 
                 }else {
 
 
-                    arrayletteraValore[hashFunctionLetteraValore(s2[i])]->n_min++;
+                    letterValueArray[hashFunctionLetteraValore(s2[i])]->n_min++;
                     strPerCP[i] = '|';
 
-                    insertInPosArray(arrayletteraValore[hashFunctionLetteraValore(s2[i])]->pos,i);
+                    insertInPosArray(letterValueArray[hashFunctionLetteraValore(s2[i])]->pos, i);
 
                     /**
                      * Conto solo le lettere che so essere presenti(in base alle parole "giocate") nella word di riferimento ma che sono in posizione sbagliata
                      */
-                    arrayletteraValore[hashFunctionLetteraValore(s2[i])]->value =
-                            arrayletteraValore[hashFunctionLetteraValore(s2[i])]->value + 2;
+                    letterValueArray[hashFunctionLetteraValore(s2[i])]->value =
+                            letterValueArray[hashFunctionLetteraValore(s2[i])]->value + 2;
 
                 }
             }
@@ -364,16 +359,16 @@ char *confrontaParole(char *s1, char *s2) {
     }
 
     for (int i = 0; i < k; i++) {
-        if (arrayletteraValore[hashFunctionLetteraValore(s1[i])]->max_raggiunto == '0'&& arrayDelleOccorrenze[i] < arrayletteraValore[hashFunctionLetteraValore(s1[i])]->n_min)
-            arrayDelleOccorrenze[i] = arrayletteraValore[hashFunctionLetteraValore(s1[i])]->n_min;
+        if (letterValueArray[hashFunctionLetteraValore(s1[i])]->maxReached == '0' && occurrencesArray[i] < letterValueArray[hashFunctionLetteraValore(s1[i])]->n_min)
+            occurrencesArray[i] = letterValueArray[hashFunctionLetteraValore(s1[i])]->n_min;
 
 
-        if (arrayletteraValore[hashFunctionLetteraValore(s1[i])]->max_raggiunto == '1')
-            arrayDelleOccorrenze[i] =-1*arrayletteraValore[hashFunctionLetteraValore(s1[i])]->n_esatto;
+        if (letterValueArray[hashFunctionLetteraValore(s1[i])]->maxReached == '1')
+            occurrencesArray[i] = -1 * letterValueArray[hashFunctionLetteraValore(s1[i])]->n_exact;
 
     }
     for (int i = 0; i < k; i++) {
-        arrayletteraValore[hashFunctionLetteraValore(s1[i])]->n_min = 0;
+        letterValueArray[hashFunctionLetteraValore(s1[i])]->n_min = 0;
     }
 
 
@@ -382,7 +377,7 @@ char *confrontaParole(char *s1, char *s2) {
 }
 
 
-int strcomparator(char *s1, char *s2){
+int strComparator(char *s1, char *s2){
     while (*s1 != '\0') {
         if (*s1 < *s2)
             return -1;
@@ -399,7 +394,7 @@ void inOrderPrint(struct  treeNode *node) {
     while (node){
         if (node->compatible == '1')
             printf("%s\n", node->word);
-        node = node->successoreCompatibile;
+        node = node->compatibleSuccessor;
     }
 
 }
@@ -407,9 +402,9 @@ void inOrderPrint(struct  treeNode *node) {
 
 int inOrderResearch(char *word, struct treeNode *node) {
     while (node != NULL) {
-        if (strcomparator(node->word, word) > 0) {
+        if (strComparator(node->word, word) > 0) {
             node = node->left;
-        } else if (strcomparator(node->word, word) < 0) {
+        } else if (strComparator(node->word, word) < 0) {
             node = node->right;
         }
         else if(strcmp(node->word, word) == 0 )
@@ -433,7 +428,7 @@ void restoreTree(struct treeNode *root) {
 
 
 
-char *customstrcpy(char *dest, int size, char *src) {
+char *customStrCopy(char *dest, int size, char *src) {
     int i;
     for (i = 0; i < size ; i++) {
         dest[i] = src[i];
@@ -444,8 +439,8 @@ char *customstrcpy(char *dest, int size, char *src) {
 }
 
 /*
- * Inserisce ogni nuovo nodo nell'albero, ma se viene inserito durante una partita viene controllato che la parola sia compatibile, se si il nodo
- * viene aggiunto nella lista (in ogni caso viene aggiunto all'albero perchè la parola va ad arrichire il dizionario che sarà usato anche nelle successive partite)
+ * Inserisce ogni nuovo nodo nell'albero, ma se viene inserito durante una partita viene controllato che la goalWord sia compatibile, se si il nodo
+ * viene aggiunto nella lista (in ogni caso viene aggiunto all'albero perchè la goalWord va ad arrichire il dizionario che sarà usato anche nelle successive partite)
  *
  * Se il nodo è aggiunto prima o dopo una partita viene semplicemente aggiunto all'albero e non alla lista, questa verrà poi sistema dalla funzione "fillSuccessorTree"
  */
@@ -460,9 +455,9 @@ void insert(char *word, char compatible, char inGame) {//TODO
     int trovato = 0;
     while (currentNode != NULL && trovato == 0) {
         parent = currentNode;
-        if (strcomparator(currentNode->word, word) > 0) {
+        if (strComparator(currentNode->word, word) > 0) {
             currentNode = currentNode->left;
-        } else if (strcomparator(currentNode->word, word) < 0) {
+        } else if (strComparator(currentNode->word, word) < 0) {
             currentNode = currentNode->right;
         }
         else
@@ -471,11 +466,11 @@ void insert(char *word, char compatible, char inGame) {//TODO
 
     new_node = malloc(sizeof new_node[0] + sizeof new_node->word[0] * (k + 1));
     if (new_node) {
-        customstrcpy(new_node->word, k, word);
+        customStrCopy(new_node->word, k, word);
 
         new_node->left = NULL;
-        new_node->successoreCompatibile = NULL;
-        new_node->predecessoreCompatibile = NULL;//TODO
+        new_node->compatibleSuccessor = NULL;
+        new_node->compatiblePredecessor = NULL;//TODO
         new_node->right = NULL;
         new_node->compatible = compatible;
     }
@@ -483,9 +478,9 @@ void insert(char *word, char compatible, char inGame) {//TODO
     if (parent == NULL) {
         root = new_node;
 
-    } else if (parent != NULL && strcomparator(parent->word, word) > 0) {
+    } else if (parent != NULL && strComparator(parent->word, word) > 0) {
         parent->left = new_node;
-    } else if (parent != NULL && strcomparator(parent->word, word) < 0) {
+    } else if (parent != NULL && strComparator(parent->word, word) < 0) {
         parent->right = new_node;
     }
     new_node->father = parent;
@@ -497,33 +492,33 @@ void insert(char *word, char compatible, char inGame) {//TODO
         globalCounter++;
 
         if (strcmp(new_node->word, min->word) < 0) {
-            new_node->successoreCompatibile = min;
-            new_node->predecessoreCompatibile = NULL;
-            min->predecessoreCompatibile = new_node;
+            new_node->compatibleSuccessor = min;
+            new_node->compatiblePredecessor = NULL;
+            min->compatiblePredecessor = new_node;
             min = new_node;
 
         }else {
-            temp = successoreCompatibile(new_node);
-            new_node->successoreCompatibile = temp;
+            temp = compatibleSuccessor(new_node);
+            new_node->compatibleSuccessor = temp;
             if (temp != NULL) {
-                new_node->predecessoreCompatibile = temp->predecessoreCompatibile;
-                if (temp->predecessoreCompatibile != NULL) {
-                    temp2 = temp->predecessoreCompatibile;
-                    temp->predecessoreCompatibile = new_node;
-                    temp2->successoreCompatibile = new_node;
+                new_node->compatiblePredecessor = temp->compatiblePredecessor;
+                if (temp->compatiblePredecessor != NULL) {
+                    temp2 = temp->compatiblePredecessor;
+                    temp->compatiblePredecessor = new_node;
+                    temp2->compatibleSuccessor = new_node;
                 }else
-                    temp->predecessoreCompatibile = new_node;
+                    temp->compatiblePredecessor = new_node;
 
             } else {
-                new_node->predecessoreCompatibile = predCompatiibile(new_node);
-                new_node->successoreCompatibile = NULL;
+                new_node->compatiblePredecessor = compatiblePredecessor(new_node);
+                new_node->compatibleSuccessor = NULL;
             }
         }
     }
 }
 
 /*
- * se una parola viene aggiunta al dizionario durante una partita, questa funzione controlla se tale parole rispetta i vincoli trovati
+ * se una goalWord viene aggiunta al dizionario durante una partita, questa funzione controlla se tale parole rispetta i vincoli trovati
  */
 char filterWord (char *p, char *r) {
     char returnValue = '1';
@@ -533,35 +528,35 @@ char filterWord (char *p, char *r) {
     for (int i = 0; (i < k && exitCicle != 1); i++) {
         l = p[i];
 
-        if (arrayletteraValore[hashFunctionLetteraValore(l)]->value != -1) {
+        if (letterValueArray[hashFunctionLetteraValore(l)]->value != -1) {
 
-            if (arrayletteraValore[hashFunctionLetteraValore(l)]->value ==
+            if (letterValueArray[hashFunctionLetteraValore(l)]->value ==
                 0) {
                 returnValue = '0';
 
                 exitCicle = 1;
                 break;
 
-            } else if (searchArray(arrayletteraValore[hashFunctionLetteraValore(l)]->pos, i) == 1) {
+            } else if (searchArray(letterValueArray[hashFunctionLetteraValore(l)]->pos, i) == 1) {
                 returnValue = '0';
                 exitCicle = 1;
                 break;
             }
         }
-        if (vincoliSuRes[i] != '*') {
+        if (resConstraints[i] != '*') {
             if (p[i] !=
-                parola[i]) {
+                goalWord[i]) {
                 returnValue = '0';
                 exitCicle = 1;
                 break;
             }
         }
-        if (arrayDelleOccorrenze[i] > 0 && countLetters(p, parola[i]) < arrayDelleOccorrenze[i]) {
+        if (occurrencesArray[i] > 0 && countLetters(p, goalWord[i]) < occurrencesArray[i]) {
             returnValue = '0';
             exitCicle = 1;
             break;
         }
-        if (arrayDelleOccorrenze[i] < 0 && countLetters(p, parola[i]) != (arrayDelleOccorrenze[i] * -1)) {
+        if (occurrencesArray[i] < 0 && countLetters(p, goalWord[i]) != (occurrencesArray[i] * -1)) {
             returnValue = '0';
 
             exitCicle = 1;
@@ -595,15 +590,15 @@ void startGame() {
 
     char *getNum = malloc(sizeof(char) *1000);
     str = malloc(sizeof(char) * (k+20));
-    parola = malloc(sizeof(char) * (k+2));
+    goalWord = malloc(sizeof(char) * (k + 2));
     res = malloc(sizeof(char) * (k+2));
 
     for (int i = 0; i < k; i++)
         res[i] = '/';
     res[k] = '\0';
 
-    if (fgets(parola,k+20, stdin) != NULL)
-        parola[strcspn(parola, "\n")] = 0;
+    if (fgets(goalWord, k + 20, stdin) != NULL)
+        goalWord[strcspn(goalWord, "\n")] = 0;
 
 
     if (fgets(getNum,1000, stdin) != NULL)
@@ -627,7 +622,7 @@ void startGame() {
 
                 if (ended == 0) {
                     if (str[0]!='+')
-                        insert(str, filterWord(str, vincoliSuRes), 1);
+                        insert(str, filterWord(str, resConstraints), 1);
                 }else {
                     if (str[0]!='+')
                         insert(str, 1, 0);
@@ -638,8 +633,8 @@ void startGame() {
 
         } else if (strcmp("+nuova_partita\0", str) == 0) {
 
-            if (fgets(parola,k+20, stdin) != NULL)
-                parola[strcspn(parola, "\n")] = 0;
+            if (fgets(goalWord, k + 20, stdin) != NULL)
+                goalWord[strcspn(goalWord, "\n")] = 0;
 
 
             if (fgets(getNum,1000, stdin) != NULL)
@@ -659,15 +654,15 @@ void startGame() {
             insertInLetteraValore('-',-1,0,0,0);
             insertInLetteraValore('_',-1,0,0,0);
             for(int i = 0; i < k; i++)
-                arrayDelleOccorrenze[i] = 0;
+                occurrencesArray[i] = 0;
 
             for (int i = 0; i < k; i++)
                 res[i] = '/';
             res[k] = '\0';
 
             for (int i = 0; i < k; i++)
-                vincoliSuRes[i] = '*';
-            vincoliSuRes[k] = '\0';
+                resConstraints[i] = '*';
+            resConstraints[k] = '\0';
 
             ended = 0;
 
@@ -677,7 +672,7 @@ void startGame() {
             printf("not_exists\n");
 
         } else if (str[0] != '+'){
-            res = confrontaParole(parola, str);
+            res = compareWords(goalWord, str);
             if (hasWon(k, res) != 1 && ended == 0)
                 printf("%s\n%d\n", res, globalCounter);
             n--;
@@ -703,15 +698,15 @@ void fillTree() {
 
     char *stringa = malloc(sizeof(char)*(k+20));
 
-    arrayDelleOccorrenze = malloc(sizeof (int) * (k+2));
+    occurrencesArray = malloc(sizeof (int) * (k + 2));
     for(int i = 0; i < k; i++)
-        arrayDelleOccorrenze[i] = 0;
+        occurrencesArray[i] = 0;
 
-    vincoliSuRes = malloc(sizeof(char)* (k+2));
+    resConstraints = malloc(sizeof(char) * (k + 2));
 
     for (int i = 0; i < k; i++)
-        vincoliSuRes[i] = '*';
-    vincoliSuRes[k] = '\0';
+        resConstraints[i] = '*';
+    resConstraints[k] = '\0';
 
     strPerCP = malloc(sizeof(char)* (k+2));
     for (int i = 0; i < k; i++)
