@@ -46,7 +46,7 @@ int hashFunctionLetteraValore(char lettera) {
 
 /*
  * questa funzione permette di salvare per ogni letter tutte le informazioni che vengono apprese giocando
- * come la posizione nella stringa dove non può comparire, il numero minimo, massimo ed esatto delle occorrenze 
+ * come la posizione nella stringa dove non può comparire, il numero minimo, massimo ed esatto delle occorrenze
  * di quella lettera nella parola da indovinare
  */
 void insertInLetteraValore(char lettera, int valore,int pos,int n_max, int n_min ) {
@@ -106,11 +106,11 @@ struct treeNode* compatibleSuccessor(struct treeNode *n)
 {
 
     struct treeNode* current = n;
-        while (inOrderSuccessor(current) != NULL ) {//todo corner case
-            current = inOrderSuccessor(current);
-            if (current->compatible == '1')
-                return current;
-        }
+    while (inOrderSuccessor(current) != NULL ) {//todo corner case
+        current = inOrderSuccessor(current);
+        if (current->compatible == '1')
+            return current;
+    }
     return NULL;
 }
 
@@ -132,8 +132,8 @@ struct treeNode* compatiblePredecessor(struct treeNode *n)
         prev->compatibleSuccessor = n;
         return prev;
     }
-        min->compatibleSuccessor = n;
-        return min;
+    min->compatibleSuccessor = n;
+    return min;
 }
 
 /*
@@ -200,19 +200,19 @@ int searchArray(int posArray[],int pos) {
 
 /*
  * prende un nodo in input e controlla che la parola contenuta nel nodo sia ancora compatibile, sostanzialmente controlla che ogni
- * letter della parola rispetti tutti i vincoli salvati in "letterValueArray", nel caso la parola non sia compatibile setta
+ * lettera della parola rispetti tutti i vincoli salvati in "letterValueArray", nel caso la parola non sia compatibile setta
  *il campo "compatible" a 0
  *
  * questa funzione è utilizzata durante la partita per segnare i nodi che non sono più disponibili dopo che la parola giocata
  * viene letta in input, la funzione è chiamata per ogni nodo
  * */
-int filterSingleWord(struct treeNode *node) {
+int checkNode(struct treeNode *node) {
     char l;
     int exitCycle = 0;
-
     int nlettere = 0;
+
     if (node->compatible != '0') {
-        for (int i = 0; (i < k && exitCycle != 1); i++) {
+        for (int i = 0; i < k; i++) {
             l = node->word[i];
             if (letterValueArray[hashFunctionLetteraValore(l)]->value != -1) {
                 if (letterValueArray[hashFunctionLetteraValore(l)]->value ==
@@ -268,7 +268,7 @@ void filterDictionary(struct treeNode* root) {
     struct treeNode *prev;
     struct treeNode *temp;
 
-    while (filterSingleWord(min) == 1)
+    while (checkNode(min) == 1)
         min = min->compatibleSuccessor;
 
     if (min->compatibleSuccessor != NULL) {
@@ -277,7 +277,7 @@ void filterDictionary(struct treeNode* root) {
         current->compatiblePredecessor = min;
         while (current->compatibleSuccessor != NULL) {
 
-            if (filterSingleWord(current) == 1) {
+            if (checkNode(current) == 1) {
                 prev->compatibleSuccessor = current->compatibleSuccessor;
                 (current->compatibleSuccessor)->compatiblePredecessor = prev;
 
@@ -287,7 +287,7 @@ void filterDictionary(struct treeNode* root) {
             current = current->compatibleSuccessor;
         }
 
-        if (filterSingleWord(current) == 1) {
+        if (checkNode(current) == 1) {
             temp = current->compatiblePredecessor;
             temp->compatibleSuccessor = NULL;
         }
@@ -520,14 +520,13 @@ void insert(char *word, char compatible, char inGame) {//TODO
 }
 
 /*
- * se una parola viene aggiunta al dizionario durante una partita, questa funzione controlla se tale parole rispetta i vincoli trovati
+ * se una parola viene aggiunta al dizionario durante una partita, questa funzione controlla se tale parola rispetta i vincoli trovati
  */
-char filterWord (char *p, char *r) {
+char checkWord (char *p, char *r) {
     char returnValue = '1';
-    int exitCycle = 0;
     char l;
 
-    for (int i = 0; (i < k && exitCycle != 1); i++) {
+    for (int i = 0; i < k; i++) {
         l = p[i];
 
         if (letterValueArray[hashFunctionLetteraValore(l)]->value != -1) {
@@ -535,13 +534,10 @@ char filterWord (char *p, char *r) {
             if (letterValueArray[hashFunctionLetteraValore(l)]->value ==
                 0) {
                 returnValue = '0';
-
-                exitCycle = 1;
                 break;
 
             } else if (searchArray(letterValueArray[hashFunctionLetteraValore(l)]->pos, i) == 1) {
                 returnValue = '0';
-                exitCycle = 1;
                 break;
             }
         }
@@ -549,19 +545,16 @@ char filterWord (char *p, char *r) {
             if (p[i] !=
                 goalWord[i]) {
                 returnValue = '0';
-                exitCycle = 1;
                 break;
             }
         }
         if (occurrencesArray[i] > 0 && countLetters(p, goalWord[i]) < occurrencesArray[i]) {
             returnValue = '0';
-            exitCycle = 1;
             break;
         }
         if (occurrencesArray[i] < 0 && countLetters(p, goalWord[i]) != (occurrencesArray[i] * -1)) {
             returnValue = '0';
 
-            exitCycle = 1;
             break;
         }
 
@@ -624,7 +617,7 @@ void startGame() {
 
                 if (ended == 0) {
                     if (str[0]!='+')
-                        insert(str, filterWord(str, resConstraints), '1');
+                        insert(str, checkWord(str, resConstraints), '1');
                 }else {
                     if (str[0]!='+')
                         insert(str, '1', '0');
